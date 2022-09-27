@@ -12,7 +12,6 @@ on:
       IMAGE:
         required: true
         type: string
-    secrets:
       REGISTRY_HOSTNAME:
         required: true
         type: string
@@ -42,14 +41,14 @@ jobs:
       uses: 'google-github-actions/auth@v0'
       with:
         token_format: 'access_token'
-        workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
-        service_account: "${{ secrets.SERVICE_ACCOUNT }}" 
+        workload_identity_provider: "${{ inputs.WORKLOAD_IDENTITY_PROVIDER }}"
+        service_account: "${{ inputs.SERVICE_ACCOUNT }}" 
         
     - name: Build
       run: |
         export TAG=`echo ${{ inputs.GITHUB_REF }} | awk -F/ '{print $NF}'`
         echo $TAG
-        docker build -t "${{ secrets.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":"$TAG" \
+        docker build -t "${{ inputs.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":"$TAG" \
           --build-arg GITHUB_SHA="${{ inputs.GITHUB_SHA }}" \
           --build-arg GITHUB_REF="${{ inputs.GITHUB_REF }}" .    
     
@@ -58,6 +57,6 @@ jobs:
         export TAG=`echo ${{ inputs.GITHUB_REF }} | awk -F/ '{print $NF}'`
         echo $TAG
         echo '${{ steps.auth.outputs.access_token }}' | docker login -u oauth2accesstoken --password-stdin https://gcr.io 
-        docker push "${{ secrets.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":"$TAG"
-        docker tag "${{ secrets.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":"$TAG" "${{ secrets.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":latest
-        docker push "${{ secrets.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":latest
+        docker push "${{ inputs.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":"$TAG"
+        docker tag "${{ inputs.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":"$TAG" "${{ inputs.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":latest
+        docker push "${{ inputs.REGISTRY_HOSTNAME }}"/"${{ inputs.IMAGE }}":latest
