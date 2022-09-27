@@ -1,2 +1,3 @@
-# sunday-github-action
-Reusable Github Action for Sunday
+# What is this?
+
+Public repo meant to supply a reusable Github Action for Sunday.

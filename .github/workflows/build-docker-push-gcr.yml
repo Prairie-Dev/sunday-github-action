@@ -1,0 +1,40 @@
+name: build-docker-image-push-to-gcr
+
+jobs:
+  build-tag-deploy:
+
+    # Add "id-token" with the intended permissions.
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    # actions/checkout MUST come before auth
+    - uses: 'actions/checkout@v3'
+
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        token_format: 'access_token'
+        workload_identity_provider: "$WORKLOAD_IDENTITY_PROVIDER"
+        service_account: "$SERVICE_ACCOUNT" 
+        
+    - name: Build
+      run: |
+        export TAG=`echo $GITHUB_REF | awk -F/ '{print $NF}'`
+        echo $TAG
+        docker build -t "$REGISTRY_HOSTNAME"/"$IMAGE":"$TAG" \
+          --build-arg GITHUB_SHA="$GITHUB_SHA" \
+          --build-arg GITHUB_REF="$GITHUB_REF" .    
+    
+    - name: Publish
+      run: |
+        export TAG=`echo $GITHUB_REF | awk -F/ '{print $NF}'`
+        echo $TAG
+        echo '${{ steps.auth.outputs.access_token }}' | docker login -u oauth2accesstoken --password-stdin https://gcr.io 
+        docker push "$REGISTRY_HOSTNAME"/"$IMAGE":"$TAG"
+        docker tag "$REGISTRY_HOSTNAME"/"$IMAGE":"$TAG" "$REGISTRY_HOSTNAME"/"$IMAGE":latest
+        docker push "$REGISTRY_HOSTNAME"/"$IMAGE":latest
